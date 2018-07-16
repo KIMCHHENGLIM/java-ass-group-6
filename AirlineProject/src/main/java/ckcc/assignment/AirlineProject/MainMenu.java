@@ -1,4 +1,5 @@
 package ckcc.assignment.AirlineProject;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -6,6 +7,8 @@ import javax.swing.tree.TreePath;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 public class MainMenu extends JFrame implements ActionListener{
 	private JMenuBar menuBar;
@@ -96,6 +99,7 @@ public class MainMenu extends JFrame implements ActionListener{
 		JTree leftJTree = createJTree();
 		//Add JTab into RightPanel	
 		jTab = new JTabbedPane();
+		performOpenWelcome(false);	
 		//Split to 2 Panel
 		JSplitPane jsp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, 
 								leftJTree, jTab);		
@@ -238,7 +242,7 @@ public class MainMenu extends JFrame implements ActionListener{
 					
 		}
 		else if(e.getSource() == mItemWelcome) {
-			performOpenWelcome();
+			performOpenWelcome(true);			
 		}
 		else if(e.getSource() == mItemHelpContents) {
 			
@@ -250,15 +254,20 @@ public class MainMenu extends JFrame implements ActionListener{
 			
 		}
 	}
-	private void performOpenWelcome() {
+	private void performOpenWelcome(Boolean welcome) {
 		JLabel lblPhoto = new JLabel("", SwingConstants.CENTER);
-		ImageIcon icon = new ImageIcon("images/Airline-Logo-NoBackground.png");
+		ImageIcon icon = new ImageIcon("images/Airline-Logo.PNG");
 		lblPhoto.setIcon(icon);
 		
 		JPanel panelPhoto = new JPanel(new BorderLayout(10,10));
 		panelPhoto.add(lblPhoto, BorderLayout.CENTER);
 		
-		jTab.addTab("Welcome", panelPhoto);
+		if(welcome) {
+			jTab.addTab("Welcome", panelPhoto);
+		}
+		else {
+			jTab.addTab("", panelPhoto);
+		}
 		jTab.setSelectedComponent(panelPhoto);
 	}
 	private void performOpenAddAirline() {
@@ -318,7 +327,5 @@ public class MainMenu extends JFrame implements ActionListener{
 	public static void main(String[] args) {
 		//Call MainMenu
 		MainMenu main = new MainMenu();
-	}
-
-	
+	}	
 }
