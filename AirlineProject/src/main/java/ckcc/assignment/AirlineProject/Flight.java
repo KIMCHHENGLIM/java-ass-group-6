@@ -67,7 +67,7 @@ public class Flight {
 		str += "Flight : " + this.airline.getCode() + this.flightNumber + "\n";
 		str += "Type : " + this.type + "\n";
 		str += "Status : " + this.status + "\n";
-		str += this.airline.getAircraft().get(0).toString() + "\n";
+		str += this.airline.getAircraft().toString() + "\n";
 		str += this.getDepartureInfo().toString() + "\n";
 		str += this.getArrivalInfo().toString() + "\n";
 		return str;

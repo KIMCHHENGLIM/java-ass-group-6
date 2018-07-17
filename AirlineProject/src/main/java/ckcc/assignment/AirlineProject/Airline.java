@@ -1,33 +1,53 @@
 package ckcc.assignment.AirlineProject;
 
-import java.util.ArrayList;
+import javax.persistence.*;
 
-public class Airline {
-	
-	private String name;
+@Entity
+@Table(name = "tbairline")
+public class Airline {	
+	@Id
+	//@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "airlineCode")
 	private String code;
-	private ArrayList<Aircraft> aircraft;
+	@Column(name = "airlineName")
+	private String name;
+	@Embedded
+	private Aircraft aircraft = new Aircraft();
 	
+	public Airline() {
+		
+	}
+	public Airline(String code, String name, Aircraft aircraft) {
+		this.code = code;
+		this.name = name;
+		this.aircraft = aircraft;
+	}
 	public Airline(String name, String code) {
 		this.name = name;
 		this.code = code;
-		this.aircraft = new ArrayList<Aircraft>();
-	}
-	
+		this.aircraft = new Aircraft();
+	}	
 	public void add(Aircraft aircraft) {
-		this.aircraft.add(aircraft);
+		this.aircraft = aircraft;
+	}	
+
+	public Aircraft getAircraft() {
+		return aircraft;
 	}
-	
+	public void setAircraft(Aircraft aircraft) {
+		this.aircraft = aircraft;
+	}	
 	public String getCode() {
 		return this.code;
+	}	
+	public void setCode(String code) {
+		this.code = code;
 	}
-
-	public ArrayList<Aircraft> getAircraft(){
-		return this.aircraft;
+	public String getName() {
+		return name;
 	}
-	
-	public void remove(Aircraft aircraft) {
-		this.aircraft.remove(aircraft);
+	public void setName(String name) {
+		this.name = name;
 	}
 	
 }

@@ -2,14 +2,21 @@ package ckcc.assignment.AirlineProject;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 public class MainMenu extends JFrame implements ActionListener{
 	private JMenuBar menuBar;
 	private JMenu mFile, mAirline, mFlight, mSchedule, mHelp;
@@ -32,6 +39,9 @@ public class MainMenu extends JFrame implements ActionListener{
 	private JTextField txtFirstClass, txtBusinessClass, txtEconomyClass;
 	private JButton btnSave, btnClear;
 	private JLabel lblResult;
+	//List Airline
+	private JTable tbAirline;
+	private DefaultTableModel tbModelAirline;
 	
 	public MainMenu() {
 		//Create Object Menu Item of File
@@ -185,7 +195,7 @@ public class MainMenu extends JFrame implements ActionListener{
 							performOpenAddAirline();
 						}
 						else if(lastSelectedPath.equals("Show Airline")) {
-							
+							performOpenListAirline();
 						}
 						else if(lastSelectedPath.equals("Add Flight")) {
 							
@@ -221,7 +231,7 @@ public class MainMenu extends JFrame implements ActionListener{
 			performOpenAddAirline();			
 		}
 		else if(e.getSource() == mItemShowAirline) {
-					
+			performOpenListAirline();
 		}
 		else if(e.getSource() == mItemAddFlight) {
 			
@@ -252,6 +262,34 @@ public class MainMenu extends JFrame implements ActionListener{
 		}
 		else if(e.getSource() == mItemAbout) {
 			
+		}		
+		if(e.getSource() == btnSave) {			
+			SessionFactory factory = new Configuration()
+					.configure("hibernate.cfg.xml")
+					.addAnnotatedClass(Airline.class)
+					.buildSessionFactory();
+			Session session = factory.getCurrentSession();
+			
+			Airline airline = new Airline(txtAirlineName.getText(), txtAirlineCode.getText());
+			airline.add(new Aircraft(txtAircraftModel.getText(),  
+					Integer.parseInt(txtFirstClass.getText()),
+					Integer.parseInt(txtBusinessClass.getText()), 
+					Integer.parseInt(txtEconomyClass.getText())));
+			
+			session.beginTransaction();	
+			session.save(airline);			
+			session.getTransaction().commit();
+			
+			lblResult.setText("Success");
+		}
+		if(e.getSource() == btnClear) {
+			txtAirlineName.setText("");
+			txtAirlineCode.setText("");
+			txtAircraftModel.setText("");
+			txtFirstClass.setText("");
+			txtBusinessClass.setText("");
+			txtEconomyClass.setText("");
+			txtAirlineName.requestFocus();
 		}
 	}
 	private void performOpenWelcome(Boolean welcome) {
@@ -273,9 +311,9 @@ public class MainMenu extends JFrame implements ActionListener{
 	private void performOpenAddAirline() {
 		JPanel addAirlinePanel = new JPanel();//new BorderLayout(10, 10));
 		// Create Group Box - Add Airline
-		TitledBorder tBorderNewEmp = BorderFactory.createTitledBorder("ADD AIRLINE");
-		tBorderNewEmp.setTitleJustification(TitledBorder.CENTER);
-		addAirlinePanel.setBorder(tBorderNewEmp);
+		TitledBorder tBorderAddAirline = BorderFactory.createTitledBorder("ADD AIRLINE");
+		tBorderAddAirline.setTitleJustification(TitledBorder.CENTER);
+		addAirlinePanel.setBorder(tBorderAddAirline);
 		
 		//Block AddAirline - Airline Info
 		JPanel airlineInfo = new JPanel(new GridLayout(6, 2, 10, 10));
@@ -323,7 +361,58 @@ public class MainMenu extends JFrame implements ActionListener{
 		jTab.addTab("Add Airline", addAirlinePanel);
 		jTab.setSelectedComponent(addAirlinePanel);
 	}
-
+	private void performOpenListAirline() {
+		JPanel listAirlinePanel = new JPanel(new BorderLayout(10, 10));
+		// Create Group Box - Add Airline
+		TitledBorder tBorderListAirline = BorderFactory.createTitledBorder("LIST OF AIRLINE");
+		tBorderListAirline.setTitleJustification(TitledBorder.CENTER);
+		listAirlinePanel.setBorder(tBorderListAirline);
+		
+		//Table Airline
+		tbModelAirline = new DefaultTableModel();
+		tbModelAirline.addColumn("Airline Name");
+		tbModelAirline.addColumn("Airline Code");
+		tbModelAirline.addColumn("Aircraft Model");
+		tbModelAirline.addColumn("First Class Capacity");
+		tbModelAirline.addColumn("Business Class Capacity");
+		tbModelAirline.addColumn("Economy Class Capacity");
+		tbAirline = new JTable(tbModelAirline);
+		//Get Data From Database and add into Table
+		SessionFactory factory = new Configuration()
+				.configure("hibernate.cfg.xml")
+				.addAnnotatedClass(Airline.class)
+				.buildSessionFactory();
+		Session session = factory.getCurrentSession();	
+		session.beginTransaction();	
+		List<Airline> listAirlines = session.createQuery("from Airline").getResultList();
+		for(int i=0; i<listAirlines.size(); i++) {
+			String[] getrow = { listAirlines.get(i).getName(),
+					listAirlines.get(i).getCode(),
+					listAirlines.get(i).getAircraft().getModel(),
+					listAirlines.get(i).getAircraft().getFirstClassCapacity() + "",
+					listAirlines.get(i).getAircraft().getBusinessClassCapacity() + "",
+					listAirlines.get(i).getAircraft().getEconomyClassCapacity() + ""
+				};
+			tbModelAirline.addRow(getrow);
+		}
+		session.getTransaction().commit();
+		//====================END TABLE AIRLINE============================/
+		
+		//Create Block List Airline
+		JPanel blockListAirline = new JPanel(new BorderLayout(10, 10));
+		blockListAirline.add(new JLabel("List Airline"), BorderLayout.NORTH);
+		blockListAirline.add(new JSeparator(), BorderLayout.CENTER);
+		//Create Block List Airline_Final with Add Table
+		JPanel blockListAirline_Final = new JPanel(new BorderLayout(10,10));
+		blockListAirline_Final.add(blockListAirline, BorderLayout.NORTH);
+		blockListAirline_Final.add(new JScrollPane(tbAirline), BorderLayout.CENTER);
+		//===================END CREATE BLOCK LIST AIRLINE==================/
+		
+		listAirlinePanel.add(blockListAirline_Final);
+	
+		jTab.addTab("List Airline", listAirlinePanel);
+		jTab.setSelectedComponent(listAirlinePanel);		
+	}
 	public static void main(String[] args) {
 		//Call MainMenu
 		MainMenu main = new MainMenu();
