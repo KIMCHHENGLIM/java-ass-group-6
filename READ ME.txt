@@ -1,0 +1,2 @@
+Folder airline_database_mgt is database folder
+You have to copy this folder to MYSQL Database Store directory  
