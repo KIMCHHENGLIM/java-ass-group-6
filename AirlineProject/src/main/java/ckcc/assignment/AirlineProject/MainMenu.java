@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.time.DayOfWeek;
 import java.util.*;
 import java.util.List;
 public class MainMenu extends JFrame implements ActionListener{
@@ -38,7 +39,7 @@ public class MainMenu extends JFrame implements ActionListener{
 	//Add Airline
 	private JTextField txtAirlineName, txtAirlineCode, txtAircraftModel;
 	private JTextField txtFirstClass, txtBusinessClass, txtEconomyClass;
-	private JButton btnSave, btnClear;
+	private JButton btnAirlineSave, btnAirlineClear;
 	private JLabel lblResult;
 	//List Airline
 	private JTable tbAirline;
@@ -51,6 +52,7 @@ public class MainMenu extends JFrame implements ActionListener{
 	private JTextField txtArrivalAirCode, txtArrivalGate;
 	private JRadioButton rdoTypeD, rdoTypeI;
 	private JButton btnFlightSave, btnFlightClear;
+	private JLabel lblFlightResult;
 	public MainMenu() {
 		//Create Object Menu Item of File
 		mItemExit = new JMenuItem("Exit");
@@ -270,8 +272,9 @@ public class MainMenu extends JFrame implements ActionListener{
 		}
 		else if(e.getSource() == mItemAbout) {
 			
-		}		
-		else if(e.getSource() == btnSave) {			
+		}	
+		//**Airline Button
+		else if(e.getSource() == btnAirlineSave) {			
 			SessionFactory factory = new Configuration()
 					.configure("hibernate.cfg.xml")
 					.addAnnotatedClass(Airline.class)
@@ -290,7 +293,7 @@ public class MainMenu extends JFrame implements ActionListener{
 			
 			lblResult.setText("Success");
 		}
-		else if(e.getSource() == btnClear) {
+		else if(e.getSource() == btnAirlineClear) {
 			txtAirlineName.setText("");
 			txtAirlineCode.setText("");
 			txtAircraftModel.setText("");
@@ -299,6 +302,97 @@ public class MainMenu extends JFrame implements ActionListener{
 			txtEconomyClass.setText("");
 			txtAirlineName.requestFocus();
 		}
+		//=====================END AIRLINE BUTTON=====================/
+		//**Flight Button
+		else if(e.getSource() == btnFlightSave) {	
+			
+			//**Get String
+			String airlineCode = cboAirlineCode.getSelectedItem() + "";
+			String flightCode = airlineCode + txtFlightNumber.getText();
+			int flightNumber = Integer.parseInt(txtFlightNumber.getText());
+			char flightStatus = 'S';
+			boolean isDomestic = rdoTypeD.isSelected();
+			char flightType = isDomestic ? 'D':'I';
+			//Departure String
+			char departureDayOfWeek = ' ';
+			switch(cboDepartureDay.getSelectedIndex()) {
+				case 0:
+					departureDayOfWeek = 'U';
+				break;
+				case 1:
+					departureDayOfWeek = 'M';
+				break;
+				case 2:
+					departureDayOfWeek = 'T';
+				break;
+				case 3:
+					departureDayOfWeek = 'W';
+				break;
+				case 4:
+					departureDayOfWeek = 'R';
+				break;
+				case 5:
+					departureDayOfWeek = 'F';
+				break;
+				case 6:
+					departureDayOfWeek = 'S';
+				break;					
+			}			
+			String departureStTime = cboDepartureHours.getSelectedItem().toString() 
+							+ cboDepartureMinutes.getSelectedItem().toString();
+			int departureTime = Integer.parseInt(departureStTime);
+			String departureAirportCode = txtDepartureAirCode.getText();
+			String departureAirportGate = txtDepartureGate.getText();
+			//Arrival String
+			char arrivalDayOfWeek = ' ';
+			switch(cboArrivalDay.getSelectedIndex()) {
+				case 0:
+					arrivalDayOfWeek = 'U';
+				break;
+				case 1:
+					arrivalDayOfWeek = 'M';
+				break;
+				case 2:
+					arrivalDayOfWeek = 'T';
+				break;
+				case 3:
+					arrivalDayOfWeek = 'W';
+				break;
+				case 4:
+					arrivalDayOfWeek = 'R';
+				break;
+				case 5:
+					arrivalDayOfWeek = 'F';
+				break;
+				case 6:
+					arrivalDayOfWeek = 'S';
+				break;					
+			}			
+			String arrivalStTime = cboArrivalHours.getSelectedItem().toString() 
+							+ cboArrivalMinutes.getSelectedItem().toString();
+			int arrivalTime = Integer.parseInt(arrivalStTime);
+			String arrivalAirportCode = txtArrivalAirCode.getText();
+			String arrivalAirportGate = txtArrivalGate.getText();		
+			//===================END GETTING STRING==========================/
+			//Add Data Into Database
+			SessionFactory factory = new Configuration()
+					.configure("hibernate.cfg.xml")
+					.addAnnotatedClass(Flight.class)
+					.buildSessionFactory();
+			Session session = factory.getCurrentSession();
+			DepartureInfo departure = new DepartureInfo(departureDayOfWeek, departureTime, 
+												departureAirportCode, departureAirportGate);
+			ArrivalInfo arrival = new ArrivalInfo(arrivalDayOfWeek, arrivalTime, 
+					arrivalAirportCode, arrivalAirportGate);
+			Flight flight = new Flight(flightCode, airlineCode, flightNumber, flightStatus, 
+					flightType, departure, arrival);
+			session.beginTransaction();	
+			session.save(flight);
+			session.getTransaction().commit();
+			
+			lblFlightResult.setText("Success");
+		}
+		//==================END FLIGHT SAVE BUTTON===================/
 	}
 	private void performOpenAddFlight() {
 		JPanel addFlightPanel = new JPanel();//new BorderLayout(10, 10));
@@ -309,8 +403,23 @@ public class MainMenu extends JFrame implements ActionListener{
 		
 		//Block AddFlight - Flight Info
 		JPanel flightInfo = new JPanel(new GridLayout(3, 2, 10, 10));
-		flightInfo.add(new JLabel("Airline Code"));
-		flightInfo.add(txtAirlineCode = new JTextField());
+		flightInfo.add(new JLabel("Airline Code"));		
+		flightInfo.add(cboAirlineCode = new JComboBox());
+		//====================================================================
+		//Get Data From Database and add into Table
+		SessionFactory factory = new Configuration()
+				.configure("hibernate.cfg.xml")
+				.addAnnotatedClass(Airline.class)
+				.buildSessionFactory();
+		Session session = factory.getCurrentSession();	
+		session.beginTransaction();	
+		List<String> listAirlines = session.createQuery("select code from Airline").getResultList();
+		for(int i=0; i<listAirlines.size(); i++) {
+			String item = listAirlines.get(i);
+			cboAirlineCode.addItem(item);
+		}
+		session.getTransaction().commit();
+		//====================================================================
 		flightInfo.add(new JLabel("Flight Number"));
 		flightInfo.add(txtFlightNumber = new JTextField());
 		flightInfo.add(new JLabel("Type(D for domestic or I for international)"));
@@ -329,6 +438,7 @@ public class MainMenu extends JFrame implements ActionListener{
 		flightInfo_Final.add(new JSeparator(), BorderLayout.CENTER);
 		flightInfo_Final.add(flightInfo, BorderLayout.SOUTH);
 		//====================END BLOCK FLIGHT INFO==============================/
+		
 		//Block AddFlight - Departure Info
 		JPanel departureInfo = new JPanel(new GridLayout(4, 2, 10, 10));
 		departureInfo.add(new JLabel("Departure airport code"));
@@ -344,10 +454,10 @@ public class MainMenu extends JFrame implements ActionListener{
 			JPanel departureTimePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			String[] departureHours = new String[24];
 			for(int i=0; i<24; i++)
-				departureHours[i] = i + "";
+				departureHours[i] = i < 10 ? "0" + i : i + "";
 			String[] departureMinutes = new String[60];
 			for(int i=0; i<60; i++)
-				departureMinutes[i] = i + "";
+				departureMinutes[i] = i < 10 ? "0" + i : i + "";
 			departureTimePanel.add(cboDepartureHours = new JComboBox(departureHours));
 			departureTimePanel.add(cboDepartureMinutes = new JComboBox(departureMinutes));
 		//==================================================================
@@ -362,6 +472,7 @@ public class MainMenu extends JFrame implements ActionListener{
 		departureInfo_Final.add(flightInfo_Final, BorderLayout.NORTH);
 		departureInfo_Final.add(departureInfoHeader, BorderLayout.CENTER);
 		//====================END BLOCK DEPARTURE INFO==============================/
+		
 		//Block AddFlight - Arrival Info
 		JPanel arrivalInfo = new JPanel(new GridLayout(4, 2, 10, 10));
 		arrivalInfo.add(new JLabel("Arrival airport code"));
@@ -377,10 +488,10 @@ public class MainMenu extends JFrame implements ActionListener{
 			JPanel arrivalTimePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			String[] arrivalHours = new String[24];
 			for(int i=0; i<24; i++)
-				arrivalHours[i] = i + "";
+				arrivalHours[i] = i < 10 ? "0" + i : i + "";
 			String[] arrivalMinutes = new String[60];
 			for(int i=0; i<60; i++)
-				arrivalMinutes[i] = i + "";
+				arrivalMinutes[i] = i < 10 ? "0" + i : i + "";
 			arrivalTimePanel.add(cboArrivalHours = new JComboBox(arrivalHours));
 			arrivalTimePanel.add(cboArrivalMinutes = new JComboBox(arrivalMinutes));
 		//==================================================================
@@ -395,8 +506,8 @@ public class MainMenu extends JFrame implements ActionListener{
 		arrivalInfo_Final.add(departureInfo_Final, BorderLayout.NORTH);
 		arrivalInfo_Final.add(arrivalInfoHeader, BorderLayout.CENTER);
 		//====================END BLOCK ARRIVAL INFO==============================/
+		
 		//Block AddFlight - Action Button with Action Event
-		//Create AddAirline - Action Button with Action Event
 		JPanel flightButtonPanel = new JPanel(new FlowLayout());
 		flightButtonPanel.add(btnFlightSave = new JButton("Save"));
 		flightButtonPanel.add(btnFlightClear = new JButton("Clear"));
@@ -409,7 +520,16 @@ public class MainMenu extends JFrame implements ActionListener{
 		flightButtonPanel_Final.add(flightButtonPanel, BorderLayout.SOUTH);
 		//====================END BLOCK ADDFLIGHT ACTION BUTTON==============================/
 		
-		addFlightPanel.add(flightButtonPanel_Final);//flightInfo_Final);
+		//Create Block AddFlight Result
+		JPanel flightResultPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		flightResultPanel.add(lblFlightResult = new JLabel("Fill Information, Please!"));
+		//Create Block AddAirline Result - Final
+		JPanel flightResultPanel_Final = new JPanel(new BorderLayout(10, 10));
+		flightResultPanel_Final.add(flightButtonPanel_Final, BorderLayout.NORTH);
+		flightResultPanel_Final.add(flightResultPanel, BorderLayout.CENTER);
+		//====================END BLOCK ADDAIRLINE RESULT==============================/
+	
+		addFlightPanel.add(flightResultPanel_Final);//flightInfo_Final);
 		
 		jTab.addTab("Add Flight", addFlightPanel);
 		jTab.setSelectedComponent(addFlightPanel);
@@ -460,10 +580,10 @@ public class MainMenu extends JFrame implements ActionListener{
 		//====================END BLOCK ADDAIRLINE INFO==============================/
 		//Create AddAirline - Action Button with Action Event
 		JPanel airlineButtonPanel = new JPanel(new FlowLayout());
-		airlineButtonPanel.add(btnSave = new JButton("Save"));
-		airlineButtonPanel.add(btnClear = new JButton("Clear"));
-		btnSave.addActionListener(this);
-		btnClear.addActionListener(this);
+		airlineButtonPanel.add(btnAirlineSave = new JButton("Save"));
+		airlineButtonPanel.add(btnAirlineClear = new JButton("Clear"));
+		btnAirlineSave.addActionListener(this);
+		btnAirlineClear.addActionListener(this);
 		//Create AddAirline - Action Button - Final
 		JPanel airlineButtonPanel_Final = new JPanel(new BorderLayout(10, 10));
 		airlineButtonPanel_Final.add(airlineInfo_Final, BorderLayout.NORTH);
