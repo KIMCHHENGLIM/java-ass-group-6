@@ -1,6 +1,7 @@
 package ckcc.assignment.AirlineProject;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -42,7 +43,14 @@ public class MainMenu extends JFrame implements ActionListener{
 	//List Airline
 	private JTable tbAirline;
 	private DefaultTableModel tbModelAirline;
-	
+	//Add Flight
+	private JComboBox cboAirlineCode;	
+	private JComboBox cboDepartureDay, cboDepartureHours, cboDepartureMinutes;
+	private JComboBox cboArrivalDay, cboArrivalHours, cboArrivalMinutes;
+	private JTextField txtFlightNumber, txtDepartureAirCode, txtDepartureGate;
+	private JTextField txtArrivalAirCode, txtArrivalGate;
+	private JRadioButton rdoTypeD, rdoTypeI;
+	private JButton btnFlightSave, btnFlightClear;
 	public MainMenu() {
 		//Create Object Menu Item of File
 		mItemExit = new JMenuItem("Exit");
@@ -198,7 +206,7 @@ public class MainMenu extends JFrame implements ActionListener{
 							performOpenListAirline();
 						}
 						else if(lastSelectedPath.equals("Add Flight")) {
-							
+							performOpenAddFlight();
 						}
 						else if(lastSelectedPath.equals("Update Flight Status")) {
 							
@@ -234,7 +242,7 @@ public class MainMenu extends JFrame implements ActionListener{
 			performOpenListAirline();
 		}
 		else if(e.getSource() == mItemAddFlight) {
-			
+			performOpenAddFlight();
 		}
 		else if(e.getSource() == mItemUpdateFlightStatus) {
 					
@@ -263,7 +271,7 @@ public class MainMenu extends JFrame implements ActionListener{
 		else if(e.getSource() == mItemAbout) {
 			
 		}		
-		if(e.getSource() == btnSave) {			
+		else if(e.getSource() == btnSave) {			
 			SessionFactory factory = new Configuration()
 					.configure("hibernate.cfg.xml")
 					.addAnnotatedClass(Airline.class)
@@ -282,7 +290,7 @@ public class MainMenu extends JFrame implements ActionListener{
 			
 			lblResult.setText("Success");
 		}
-		if(e.getSource() == btnClear) {
+		else if(e.getSource() == btnClear) {
 			txtAirlineName.setText("");
 			txtAirlineCode.setText("");
 			txtAircraftModel.setText("");
@@ -292,6 +300,121 @@ public class MainMenu extends JFrame implements ActionListener{
 			txtAirlineName.requestFocus();
 		}
 	}
+	private void performOpenAddFlight() {
+		JPanel addFlightPanel = new JPanel();//new BorderLayout(10, 10));
+		// Create Group Box - Add Airline
+		TitledBorder tBorderAddFlight = BorderFactory.createTitledBorder("ADD NEW FLIGHT");
+		tBorderAddFlight.setTitleJustification(TitledBorder.CENTER);
+		addFlightPanel.setBorder(tBorderAddFlight);
+		
+		//Block AddFlight - Flight Info
+		JPanel flightInfo = new JPanel(new GridLayout(3, 2, 10, 10));
+		flightInfo.add(new JLabel("Airline Code"));
+		flightInfo.add(txtAirlineCode = new JTextField());
+		flightInfo.add(new JLabel("Flight Number"));
+		flightInfo.add(txtFlightNumber = new JTextField());
+		flightInfo.add(new JLabel("Type(D for domestic or I for international)"));
+		//==================================================================
+			JPanel typePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+			typePanel.add(rdoTypeD = new JRadioButton("Domestic", true));
+			typePanel.add(rdoTypeI = new JRadioButton("International"));
+			ButtonGroup bgType = new ButtonGroup();
+			bgType.add(rdoTypeD);
+			bgType.add(rdoTypeI);			
+		//==================================================================
+		flightInfo.add(typePanel);
+		//Create Block AddFlight - Flight Info - Final
+		JPanel flightInfo_Final = new JPanel(new BorderLayout(10,10));
+		flightInfo_Final.add(new JLabel("Flight's Information"), BorderLayout.NORTH);
+		flightInfo_Final.add(new JSeparator(), BorderLayout.CENTER);
+		flightInfo_Final.add(flightInfo, BorderLayout.SOUTH);
+		//====================END BLOCK FLIGHT INFO==============================/
+		//Block AddFlight - Departure Info
+		JPanel departureInfo = new JPanel(new GridLayout(4, 2, 10, 10));
+		departureInfo.add(new JLabel("Departure airport code"));
+		departureInfo.add(txtDepartureAirCode = new JTextField());
+		departureInfo.add(new JLabel("Departure airport gate"));
+		departureInfo.add(txtDepartureGate = new JTextField());
+		departureInfo.add(new JLabel("Departure day"));
+		String[] departureDays = {"Sunday", "Monday", "Tuesday", "Wednesday", 
+						"Thursday", "Friday", "Saturday"};			
+		departureInfo.add(cboDepartureDay = new JComboBox(departureDays));
+		departureInfo.add(new JLabel("Departure Time"));
+		//==================================================================
+			JPanel departureTimePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+			String[] departureHours = new String[24];
+			for(int i=0; i<24; i++)
+				departureHours[i] = i + "";
+			String[] departureMinutes = new String[60];
+			for(int i=0; i<60; i++)
+				departureMinutes[i] = i + "";
+			departureTimePanel.add(cboDepartureHours = new JComboBox(departureHours));
+			departureTimePanel.add(cboDepartureMinutes = new JComboBox(departureMinutes));
+		//==================================================================
+		departureInfo.add(departureTimePanel);
+		//Create Block AddFlight - Departure Info With Header
+		JPanel departureInfoHeader = new JPanel(new BorderLayout(10,10));
+		departureInfoHeader.add(new JLabel("Departure's Information"), BorderLayout.NORTH);
+		departureInfoHeader.add(new JSeparator(), BorderLayout.CENTER);
+		departureInfoHeader.add(departureInfo, BorderLayout.SOUTH);
+		//Create Block AddFlight - Departure Info - Final
+		JPanel departureInfo_Final = new JPanel(new BorderLayout(10,10));
+		departureInfo_Final.add(flightInfo_Final, BorderLayout.NORTH);
+		departureInfo_Final.add(departureInfoHeader, BorderLayout.CENTER);
+		//====================END BLOCK DEPARTURE INFO==============================/
+		//Block AddFlight - Arrival Info
+		JPanel arrivalInfo = new JPanel(new GridLayout(4, 2, 10, 10));
+		arrivalInfo.add(new JLabel("Arrival airport code"));
+		arrivalInfo.add(txtArrivalAirCode = new JTextField());
+		arrivalInfo.add(new JLabel("Arrival airport gate"));
+		arrivalInfo.add(txtArrivalGate = new JTextField());
+		arrivalInfo.add(new JLabel("Arrival day"));
+		String[] arrivalDays = {"Sunday", "Monday", "Tuesday", "Wednesday", 
+						"Thursday", "Friday", "Saturday"};			
+		arrivalInfo.add(cboArrivalDay = new JComboBox(arrivalDays));
+		arrivalInfo.add(new JLabel("Arrival Time"));
+		//==================================================================
+			JPanel arrivalTimePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+			String[] arrivalHours = new String[24];
+			for(int i=0; i<24; i++)
+				arrivalHours[i] = i + "";
+			String[] arrivalMinutes = new String[60];
+			for(int i=0; i<60; i++)
+				arrivalMinutes[i] = i + "";
+			arrivalTimePanel.add(cboArrivalHours = new JComboBox(arrivalHours));
+			arrivalTimePanel.add(cboArrivalMinutes = new JComboBox(arrivalMinutes));
+		//==================================================================
+		arrivalInfo.add(arrivalTimePanel);
+		//Create Block AddFlight - Departure Info With Header
+		JPanel arrivalInfoHeader = new JPanel(new BorderLayout(10,10));
+		arrivalInfoHeader.add(new JLabel("Arrival's Information"), BorderLayout.NORTH);
+		arrivalInfoHeader.add(new JSeparator(), BorderLayout.CENTER);
+		arrivalInfoHeader.add(arrivalInfo, BorderLayout.SOUTH);
+		//Create Block AddFlight - Arrival Info - Final
+		JPanel arrivalInfo_Final = new JPanel(new BorderLayout(10,10));
+		arrivalInfo_Final.add(departureInfo_Final, BorderLayout.NORTH);
+		arrivalInfo_Final.add(arrivalInfoHeader, BorderLayout.CENTER);
+		//====================END BLOCK ARRIVAL INFO==============================/
+		//Block AddFlight - Action Button with Action Event
+		//Create AddAirline - Action Button with Action Event
+		JPanel flightButtonPanel = new JPanel(new FlowLayout());
+		flightButtonPanel.add(btnFlightSave = new JButton("Save"));
+		flightButtonPanel.add(btnFlightClear = new JButton("Clear"));
+		btnFlightSave.addActionListener(this);
+		btnFlightClear.addActionListener(this);
+		//Create AddFlight - Action Button - Final
+		JPanel flightButtonPanel_Final = new JPanel(new BorderLayout(10, 10));
+		flightButtonPanel_Final.add(arrivalInfo_Final, BorderLayout.NORTH);
+		flightButtonPanel_Final.add(new JSeparator(), BorderLayout.CENTER);
+		flightButtonPanel_Final.add(flightButtonPanel, BorderLayout.SOUTH);
+		//====================END BLOCK ADDFLIGHT ACTION BUTTON==============================/
+		
+		addFlightPanel.add(flightButtonPanel_Final);//flightInfo_Final);
+		
+		jTab.addTab("Add Flight", addFlightPanel);
+		jTab.setSelectedComponent(addFlightPanel);
+	}
+
 	private void performOpenWelcome(Boolean welcome) {
 		JLabel lblPhoto = new JLabel("", SwingConstants.CENTER);
 		ImageIcon icon = new ImageIcon("images/Airline-Logo.PNG");
@@ -309,7 +432,7 @@ public class MainMenu extends JFrame implements ActionListener{
 		jTab.setSelectedComponent(panelPhoto);
 	}
 	private void performOpenAddAirline() {
-		JPanel addAirlinePanel = new JPanel();//new BorderLayout(10, 10));
+		JPanel addAirlinePanel = new JPanel(); //new BorderLayout(10, 10));
 		// Create Group Box - Add Airline
 		TitledBorder tBorderAddAirline = BorderFactory.createTitledBorder("ADD AIRLINE");
 		tBorderAddAirline.setTitleJustification(TitledBorder.CENTER);
@@ -317,17 +440,17 @@ public class MainMenu extends JFrame implements ActionListener{
 		
 		//Block AddAirline - Airline Info
 		JPanel airlineInfo = new JPanel(new GridLayout(6, 2, 10, 10));
-		airlineInfo.add(new Label("Airline Name"));
+		airlineInfo.add(new JLabel("Airline Name"));
 		airlineInfo.add(txtAirlineName = new JTextField());
-		airlineInfo.add(new Label("Airline Code"));
+		airlineInfo.add(new JLabel("Airline Code"));
 		airlineInfo.add(txtAirlineCode = new JTextField());
-		airlineInfo.add(new Label("Aircraft model"));
+		airlineInfo.add(new JLabel("Aircraft model"));
 		airlineInfo.add(txtAircraftModel = new JTextField());
-		airlineInfo.add(new Label("First Class Capacity"));
+		airlineInfo.add(new JLabel("First Class Capacity"));
 		airlineInfo.add(txtFirstClass = new JTextField());
-		airlineInfo.add(new Label("Business Class Capacity"));
+		airlineInfo.add(new JLabel("Business Class Capacity"));
 		airlineInfo.add(txtBusinessClass = new JTextField());
-		airlineInfo.add(new Label("Economy Class Capacity"));
+		airlineInfo.add(new JLabel("Economy Class Capacity"));
 		airlineInfo.add(txtEconomyClass = new JTextField());
 		//Create Block AddAirline - Airline Info - Final
 		JPanel airlineInfo_Final = new JPanel(new BorderLayout(10,10));
@@ -355,9 +478,13 @@ public class MainMenu extends JFrame implements ActionListener{
 		airlineResultPanel_Final.add(airlineButtonPanel_Final, BorderLayout.NORTH);
 		airlineResultPanel_Final.add(airlineResultPanel, BorderLayout.CENTER);
 		//====================END BLOCK ADDAIRLINE RESULT==============================/
+		/*
+		JPanel panel = new JPanel();
+		panel.setBorder(tBorderAddAirline);
+		panel.add(airlineButtonPanel_Final);
+		*/
 		
 		addAirlinePanel.add(airlineResultPanel_Final);
-		
 		jTab.addTab("Add Airline", addAirlinePanel);
 		jTab.setSelectedComponent(addAirlinePanel);
 	}
