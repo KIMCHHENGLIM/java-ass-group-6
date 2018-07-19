@@ -53,6 +53,12 @@ public class MainMenu extends JFrame implements ActionListener{
 	private JRadioButton rdoTypeD, rdoTypeI;
 	private JButton btnFlightSave, btnFlightClear;
 	private JLabel lblFlightResult;
+	//List Flight
+	private JTable tbShowListFlight;
+	private DefaultTableModel tbModelShowListFlight;
+	private JComboBox cboSearchFlightAirline;
+	private JTextField txtSearchFlightNumber;
+	private JButton btnListFlightSearch;
 	public MainMenu() {
 		//Create Object Menu Item of File
 		mItemExit = new JMenuItem("Exit");
@@ -69,6 +75,7 @@ public class MainMenu extends JFrame implements ActionListener{
 		mAirline.add(mItemAddAirline);
 		mAirline.add(mItemShowAirline);
 		mItemAddAirline.addActionListener(this);
+		mItemShowAirline.addActionListener(this);
 		//================END MENU AIRLINE==================/
 		//Create Object Menu Item of Flight
 		mItemAddFlight = new JMenuItem("Add Flight");
@@ -78,7 +85,10 @@ public class MainMenu extends JFrame implements ActionListener{
 		mFlight = new JMenu("Flight");
 		mFlight.add(mItemAddFlight);
 		mFlight.add(mItemUpdateFlightStatus);
-		mFlight.add(mItemShowFlight);		
+		mFlight.add(mItemShowFlight);	
+		mItemAddFlight.addActionListener(this);
+		mItemShowFlight.addActionListener(this);
+		mItemUpdateFlightStatus.addActionListener(this);
 		//================END MENU FLIGHT==================/
 		//Create Object Menu Item of Schedule
 		mItemDepartures = new JMenuItem("Departures");
@@ -214,7 +224,7 @@ public class MainMenu extends JFrame implements ActionListener{
 							
 						}
 						else if(lastSelectedPath.equals("Show Flight Information")) {
-							
+							performOpenListFlight();
 						}
 						else if(lastSelectedPath.equals("Departures")) {
 							
@@ -250,7 +260,7 @@ public class MainMenu extends JFrame implements ActionListener{
 					
 		}
 		else if(e.getSource() == mItemShowFlight) {
-			
+			performOpenListFlight();
 		}
 		else if(e.getSource() == mItemDepartures) {
 			
@@ -273,7 +283,7 @@ public class MainMenu extends JFrame implements ActionListener{
 		else if(e.getSource() == mItemAbout) {
 			
 		}	
-		//**Airline Button
+		//**frmAirline
 		else if(e.getSource() == btnAirlineSave) {			
 			SessionFactory factory = new Configuration()
 					.configure("hibernate.cfg.xml")
@@ -303,9 +313,8 @@ public class MainMenu extends JFrame implements ActionListener{
 			txtAirlineName.requestFocus();
 		}
 		//=====================END AIRLINE BUTTON=====================/
-		//**Flight Button
+		//**frmFlight
 		else if(e.getSource() == btnFlightSave) {	
-			
 			//**Get String
 			String airlineCode = cboAirlineCode.getSelectedItem() + "";
 			String flightCode = airlineCode + txtFlightNumber.getText();
@@ -393,7 +402,187 @@ public class MainMenu extends JFrame implements ActionListener{
 			lblFlightResult.setText("Success");
 		}
 		//==================END FLIGHT SAVE BUTTON===================/
+		//**frmListFlight
+		else if(e.getSource() == btnListFlightSearch) {
+			String flightCode = cboSearchFlightAirline.getSelectedItem().toString()
+							+ txtSearchFlightNumber.getText();
+			//Get Data From Database and add into Table
+			SessionFactory factoryFlight = new Configuration()
+					.configure("hibernate.cfg.xml")
+					.addAnnotatedClass(Flight.class)
+					.buildSessionFactory();
+			Session session = factoryFlight.getCurrentSession();	
+			session.beginTransaction();	
+			List<Flight> listFlights = session.createQuery("from Flight f where f.flightCode = '" 
+							+ flightCode + "'").getResultList();
+			//**Clear Table
+			int rowCount = tbModelShowListFlight.getRowCount();
+			//Remove rows one by one from the end of the table
+			for (int i = rowCount - 1; i >= 0; i--) {
+				tbModelShowListFlight.removeRow(i);
+			}
+			for(int i=0; i<listFlights.size(); i++) {
+				//==================================================
+				//Get Airline Information
+				SessionFactory airlineFactory = new Configuration()
+						.configure("hibernate.cfg.xml")
+						.addAnnotatedClass(Airline.class)
+						.buildSessionFactory();
+				Session sessionAirline = airlineFactory.getCurrentSession();
+				sessionAirline.beginTransaction();
+				Airline airline = sessionAirline.get(Airline.class, listFlights.get(i).getAirlineCode());
+				sessionAirline.getTransaction().commit();
+				//===================================================
+				String[] getrow = { 
+						listFlights.get(i).getFlightCode(),
+						listFlights.get(i).getFlightNumber() + "",		
+						listFlights.get(i).getStatus() + "",
+						listFlights.get(i).getType() + "",
+						
+						airline.getAircraft().getModel(),
+						airline.getAircraft().getFirstClassCapacity() + "",
+						airline.getAircraft().getBusinessClassCapacity() + "",
+						airline.getAircraft().getEconomyClassCapacity() + "",
+						
+						listFlights.get(i).getDepartureInfo().getDayOfWeek() + "",
+						listFlights.get(i).getDepartureInfo().getTime() + "",
+						listFlights.get(i).getDepartureInfo().getAirportCode() + "",
+						listFlights.get(i).getDepartureInfo().getAirportGate() + "",
+						
+						listFlights.get(i).getArrivalInfo().getDayOfWeek() + "",
+						listFlights.get(i).getArrivalInfo().getTime() + "",
+						listFlights.get(i).getArrivalInfo().getAirportCode() + "",
+						listFlights.get(i).getArrivalInfo().getAirportGate() + "",
+					};
+				tbModelShowListFlight.addRow(getrow);
+			}		
+			session.getTransaction().commit();
+			//====================END TABLE LIST FLIGHT============================/
+			
+		}
 	}
+	private void performOpenListFlight() {
+		JPanel listFlightPanel = new JPanel(new BorderLayout(10, 10));
+		// Create Group Box - Add Airline
+		TitledBorder tBorderListFlight = BorderFactory.createTitledBorder("SHOW LIST OF FLIGHT");
+		tBorderListFlight.setTitleJustification(TitledBorder.CENTER);
+		listFlightPanel.setBorder(tBorderListFlight);
+
+		// Create Search Area and Count Flight
+		JPanel searchAndCountPanel = new JPanel(new GridLayout(1,2,10,10));
+		// Add Search Area Panel
+		JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		searchPanel.add(new JLabel("Airline"));	
+		searchPanel.add(cboSearchFlightAirline = new JComboBox());
+		//====================================================================
+		//Get Data From Database and add into Table
+		SessionFactory factoryAirline = new Configuration()
+				.configure("hibernate.cfg.xml")
+				.addAnnotatedClass(Airline.class)
+				.buildSessionFactory();
+		Session sessionAir = factoryAirline.getCurrentSession();	
+		sessionAir.beginTransaction();	
+		List<String> listAirlines = sessionAir.createQuery("select code from Airline").getResultList();
+		for(int i=0; i<listAirlines.size(); i++) {
+			String item = listAirlines.get(i);
+			cboSearchFlightAirline.addItem(item);
+		}
+		sessionAir.getTransaction().commit();
+		//====================================================================
+		searchPanel.add(new JLabel("Flight Number"));
+		searchPanel.add(txtSearchFlightNumber = new JTextField(12));
+		searchPanel.add(btnListFlightSearch = new JButton("Search"));
+		btnListFlightSearch.addActionListener(this);
+		// Add Search Area
+		searchAndCountPanel.add(searchPanel);
+		searchAndCountPanel.add(new Label(""));
+		//===================END BLOCK SEARCH============================/
+		
+		//Table Flight
+		tbModelShowListFlight = new DefaultTableModel();
+		tbModelShowListFlight.addColumn("Flight Code");
+		tbModelShowListFlight.addColumn("Flight Number");
+		tbModelShowListFlight.addColumn("Flight Status");
+		tbModelShowListFlight.addColumn("Flight Type");
+		tbModelShowListFlight.addColumn("Aircraft Model");
+		tbModelShowListFlight.addColumn("First Class");
+		tbModelShowListFlight.addColumn("Business Class");
+		tbModelShowListFlight.addColumn("Economy Class");
+		tbModelShowListFlight.addColumn("Departure DayOfWeek");
+		tbModelShowListFlight.addColumn("Departure Time");
+		tbModelShowListFlight.addColumn("Departure AirportCode");
+		tbModelShowListFlight.addColumn("Departure AirportGate");
+		tbModelShowListFlight.addColumn("Arrival DayOfWeek");
+		tbModelShowListFlight.addColumn("Arrival Time");
+		tbModelShowListFlight.addColumn("Arrival AirportCode");
+		tbModelShowListFlight.addColumn("Arrival AirportGate");
+		tbShowListFlight = new JTable(tbModelShowListFlight);
+		
+		//Get Data From Database and add into Table
+		SessionFactory factoryFlight = new Configuration()
+				.configure("hibernate.cfg.xml")
+				.addAnnotatedClass(Flight.class)
+				.buildSessionFactory();
+		Session session = factoryFlight.getCurrentSession();	
+		session.beginTransaction();	
+		List<Flight> listFlights = session.createQuery("from Flight").getResultList();
+		for(int i=0; i<listFlights.size(); i++) {
+			//==================================================
+			//Get Airline Information
+			SessionFactory airlineFactory = new Configuration()
+					.configure("hibernate.cfg.xml")
+					.addAnnotatedClass(Airline.class)
+					.buildSessionFactory();
+			Session sessionAirline = airlineFactory.getCurrentSession();
+			sessionAirline.beginTransaction();
+			Airline airline = sessionAirline.get(Airline.class, listFlights.get(i).getAirlineCode());
+			sessionAirline.getTransaction().commit();
+			//===================================================
+			String[] getrow = { 
+					listFlights.get(i).getFlightCode(),
+					listFlights.get(i).getFlightNumber() + "",		
+					listFlights.get(i).getStatus() + "",
+					listFlights.get(i).getType() + "",
+					
+					airline.getAircraft().getModel(),
+					airline.getAircraft().getFirstClassCapacity() + "",
+					airline.getAircraft().getBusinessClassCapacity() + "",
+					airline.getAircraft().getEconomyClassCapacity() + "",
+					
+					listFlights.get(i).getDepartureInfo().getDayOfWeek() + "",
+					listFlights.get(i).getDepartureInfo().getTime() + "",
+					listFlights.get(i).getDepartureInfo().getAirportCode() + "",
+					listFlights.get(i).getDepartureInfo().getAirportGate() + "",
+					
+					listFlights.get(i).getArrivalInfo().getDayOfWeek() + "",
+					listFlights.get(i).getArrivalInfo().getTime() + "",
+					listFlights.get(i).getArrivalInfo().getAirportCode() + "",
+					listFlights.get(i).getArrivalInfo().getAirportGate() + "",
+				};
+			tbModelShowListFlight.addRow(getrow);
+		}		
+		session.getTransaction().commit();
+		//====================END TABLE FLIGHT============================/
+		
+		//Create Block List Flight
+		JPanel blockListFlight = new JPanel(new BorderLayout(10, 10));
+		blockListFlight.add(new JLabel("List Flight's Information"), BorderLayout.NORTH);
+		blockListFlight.add(new JSeparator(), BorderLayout.CENTER);
+		blockListFlight.add(searchAndCountPanel, BorderLayout.NORTH);
+		//Create Block List Airline_Final with Add Table
+		JPanel blockListFlight_Final = new JPanel(new BorderLayout(10,10));
+		blockListFlight_Final.add(blockListFlight, BorderLayout.NORTH);
+		blockListFlight_Final.add(new JScrollPane(tbShowListFlight), BorderLayout.CENTER);
+		//===================END CREATE BLOCK LIST AIRLINE==================/
+		
+		listFlightPanel.add(blockListFlight_Final);
+	
+		 
+		
+		jTab.addTab("List Flight", listFlightPanel);
+		jTab.setSelectedComponent(listFlightPanel);
+	}
+
 	private void performOpenAddFlight() {
 		JPanel addFlightPanel = new JPanel();//new BorderLayout(10, 10));
 		// Create Group Box - Add Airline
