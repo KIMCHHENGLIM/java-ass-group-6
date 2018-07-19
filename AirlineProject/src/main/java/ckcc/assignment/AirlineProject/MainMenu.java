@@ -131,6 +131,9 @@ public class MainMenu extends JFrame implements ActionListener{
 		mHelp.add(mItemCheckUpdate);
 		mHelp.add(mItemAbout);
 		mItemWelcome.addActionListener(this);
+		mItemHelpContents.addActionListener(this);
+		mItemCheckUpdate.addActionListener(this);
+		mItemAbout.addActionListener(this);
 		//=========================END MENU HELP ======================/
 		
 		// Create Object Menu Bar and add its menus
@@ -293,13 +296,13 @@ public class MainMenu extends JFrame implements ActionListener{
 			performOpenWelcome(true);			
 		}
 		else if(e.getSource() == mItemHelpContents) {
-			
+			performOpenHelpContents();
 		}
 		else if(e.getSource() == mItemCheckUpdate) {
-			
+			performOpenUpdate();
 		}
 		else if(e.getSource() == mItemAbout) {
-			
+			performOpenAboutUs();
 		}	
 		//**frmAirline
 		else if(e.getSource() == btnAirlineSave) {	
@@ -668,8 +671,19 @@ public class MainMenu extends JFrame implements ActionListener{
 		
 		lblFlightResult.setText("Success");
 	}
-
-
+	private void performOpenUpdate() {
+		JOptionPane.showMessageDialog(null, "This software is up-to-date. Stay tune! :D"
+				,"Update", JOptionPane.INFORMATION_MESSAGE);
+	}
+	private void performOpenAboutUs() {
+		String st = "This software created by:\n"
+					+ "LIM KIMCHHENG\n"
+					+ "KOEU SOKIM\n"
+					+ "Lead By Mr.THAY SETHA\n"
+					+ "CKCC-ASSIGNMENT-Group6-Airline";
+		JOptionPane.showMessageDialog(null, st
+				,"About Us", JOptionPane.INFORMATION_MESSAGE);			
+	}
 	private void performClearSchedule() {
 		int n = JOptionPane.showConfirmDialog(null, 
 				"Are you sure you want to clear schedule?", 
@@ -1149,6 +1163,17 @@ public class MainMenu extends JFrame implements ActionListener{
 		else {
 			jTab.addTab("", panelPhoto);
 		}
+		jTab.setSelectedComponent(panelPhoto);
+	}
+	private void performOpenHelpContents() {
+		JLabel lblPhoto = new JLabel("", SwingConstants.CENTER);
+		ImageIcon icon = new ImageIcon("images/UnderConstruction.PNG");
+		lblPhoto.setIcon(icon);
+		
+		JPanel panelPhoto = new JPanel(new BorderLayout(10,10));
+		panelPhoto.add(lblPhoto, BorderLayout.CENTER);
+		
+		jTab.addTab("Help Contents", panelPhoto);
 		jTab.setSelectedComponent(panelPhoto);
 	}
 	private void performOpenAddAirline() {
